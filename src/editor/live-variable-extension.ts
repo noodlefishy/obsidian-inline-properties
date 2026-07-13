@@ -54,11 +54,12 @@ class LiveVariableWidget extends WidgetType {
 			span.className = "lv-live-text";
 		}
 		span.textContent = this.value;
-		// A single click selects the whole {{variable}} source so it can be
-		// retyped/replaced immediately. We drive the selection ourselves
+		// A single click or tap selects the whole {{variable}} source so it can
+		// be retyped/replaced immediately. We drive the selection ourselves
 		// (rather than letting the caret land somewhere inside the widget) so
-		// editing never depends on a precise click position.
-		span.addEventListener("mousedown", (event) => {
+		// editing never depends on a precise click position. pointerdown covers
+		// both mouse and touch, so this works on Obsidian mobile too.
+		span.addEventListener("pointerdown", (event) => {
 			event.preventDefault();
 			const pos = view.posAtDOM(span);
 			view.dispatch({

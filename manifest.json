@@ -1,10 +1,10 @@
 {
 	"id": "inline-properties",
 	"name": "Inline Properties",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"minAppVersion": "1.4.0",
 	"description": "Reference note properties as inline variables anywhere in your vault using {{variable}} syntax.",
 	"author": "Zizouet",
 	"authorUrl": "https://github.com/Zizouet",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

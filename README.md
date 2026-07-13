@@ -25,7 +25,7 @@ Then use them anywhere in that note, or anywhere else in the vault:
 The project **{{project}}** runs at ${{rate}}/hour.
 ```
 
-The `{{variable}}` token is replaced inline as you type. Hovering a rendered value briefly reveals the raw `{{...}}` source so you can edit it. When you copy text containing variables, the resolved values are copied, not the raw `{{...}}` syntax.
+The `{{variable}}` token is replaced inline as you type. Selecting (click or tap) a rendered value reveals the raw `{{...}}` source so you can edit it. When you copy text containing variables, the resolved values are copied, not the raw `{{...}}` syntax.
 
 ## Variable scope
 
