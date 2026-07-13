@@ -2,7 +2,7 @@ export const stringifyIfObj = (obj: unknown): string => {
 	if (typeof obj === "object" && obj !== null) {
 		return JSON.stringify(obj);
 	}
-	return String(obj as string | number | boolean);
+	return String(obj);
 };
 
 export const trancateString = (str: string, maxLength: number): string => {
