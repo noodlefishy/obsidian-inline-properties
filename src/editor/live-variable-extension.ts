@@ -12,15 +12,12 @@ import LiveVariables from "../main";
 import {
 	isKnownVariable,
 	liveVariableRegex,
-	resolveLiveVariableValue,
+	resolveLiveVariableValueDetailed,
 	resolveLiveVariablesInText,
 } from "./live-variable-shared";
 
-// Dispatched to force a decoration rebuild when a referenced variable changes
-// in another note (which does not itself produce a doc change in this editor).
 const refreshLiveVariablesEffect = StateEffect.define<void>();
 
-/** Forces every open markdown editor to recompute its live-variable widgets. */
 export const refreshAllLiveVariables = (plugin: LiveVariables) => {
 	plugin.app.workspace.getLeavesOfType("markdown").forEach((leaf) => {
 		const view = leaf.view;
@@ -35,7 +32,10 @@ class LiveVariableWidget extends WidgetType {
 	constructor(
 		private readonly value: string,
 		private readonly highlight: boolean,
-		private readonly source: string
+		private readonly source: string,
+		private readonly cleanKey: string,
+		private readonly isBlur: boolean,
+		private readonly plugin: LiveVariables
 	) {
 		super();
 	}
@@ -44,21 +44,24 @@ class LiveVariableWidget extends WidgetType {
 		return (
 			other.value === this.value &&
 			other.highlight === this.highlight &&
-			other.source === this.source
+			other.source === this.source &&
+			other.cleanKey === this.cleanKey &&
+			other.isBlur === this.isBlur
 		);
 	}
 
 	toDOM(view: EditorView): HTMLElement {
 		const span = view.dom.ownerDocument.createElement("span");
-		if (this.highlight) {
-			span.className = "lv-live-text";
-		}
+		
+		let cls = "";
+		if (this.highlight) cls += "lv-live-text ";
+		if (this.isBlur) cls += "lv-spoiler ";
+		if (cls) span.className = cls.trim();
+
+		span.dataset.variable = this.cleanKey;
 		span.textContent = this.value;
-		// A single click or tap selects the whole {{variable}} source so it can
-		// be retyped/replaced immediately. We drive the selection ourselves
-		// (rather than letting the caret land somewhere inside the widget) so
-		// editing never depends on a precise click position. pointerdown covers
-		// both mouse and touch, so this works on Obsidian mobile too.
+
+		// Click selects variable text
 		span.addEventListener("pointerdown", (event) => {
 			event.preventDefault();
 			const pos = view.posAtDOM(span);
@@ -70,20 +73,30 @@ class LiveVariableWidget extends WidgetType {
 			});
 			view.focus();
 		});
+
+		// Double-click to open frontmatter edit prompt!
+		span.addEventListener("dblclick", (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			const activeFile = this.plugin.app.workspace.getActiveFile();
+			if (!activeFile) return;
+
+			const newValue = prompt(`Edit property "${this.cleanKey}":`, this.value);
+			if (newValue !== null) {
+				void this.plugin.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
+					frontmatter[this.cleanKey] = newValue;
+				});
+			}
+		});
+
 		return span;
 	}
 
 	ignoreEvent(): boolean {
-		// We handle clicks ourselves (see toDOM), so keep CodeMirror from also
-		// moving the caret in response to the same event.
 		return true;
 	}
 }
 
-/**
- * Builds the decorations that replace {{NAME}} tokens with their computed value,
- * except when the selection overlaps a token (so it stays editable as source).
- */
 const buildDecorations = (
 	view: EditorView,
 	plugin: LiveVariables
@@ -103,11 +116,6 @@ const buildDecorations = (
 			const start = from + match.index;
 			const end = start + match[0].length;
 
-			// Reveal the raw source for editing in two cases: a collapsed caret
-			// sitting on the token, or a selection whose bounds exactly match
-			// the token (what a click on the widget produces). A broader
-			// multi-character selection keeps the rendered preview so it can be
-			// selected and copied as the value.
 			const revealSource = selectionRanges.some(
 				(range) =>
 					(range.empty &&
@@ -119,11 +127,11 @@ const buildDecorations = (
 				continue;
 			}
 
-			const value = resolveLiveVariableValue(
+			const res = resolveLiveVariableValueDetailed(
 				content,
 				plugin.vaultProperties
 			);
-			if (value === undefined) {
+			if (res === undefined) {
 				continue;
 			}
 
@@ -132,9 +140,12 @@ const buildDecorations = (
 				end,
 				Decoration.replace({
 					widget: new LiveVariableWidget(
-						value,
+						res.value,
 						plugin.settings.highlightText,
-						match[0]
+						match[0],
+						res.cleanKey,
+						res.isBlur,
+						plugin
 					),
 				})
 			);
@@ -172,8 +183,6 @@ const liveVariableViewPlugin = (plugin: LiveVariables) =>
 		}
 	);
 
-// Puts the rendered "preview" text on the clipboard when copying/cutting from
-// the editor, so {{NAME}} comes out as its value (honors the opt-out setting).
 const liveVariableClipboardFilter = (plugin: LiveVariables) =>
 	EditorView.clipboardOutputFilter.of((text) => {
 		if (!plugin.settings.copyResolvedValues) {
