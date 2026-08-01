@@ -2,7 +2,7 @@ import LiveVariables from "../main";
 import {
 	isKnownVariable,
 	liveVariableRegex,
-	resolveLiveVariableValue,
+	resolveLiveVariableValueDetailed,
 } from "./live-variable-shared";
 
 const isInsideCode = (node: Node): boolean => {
@@ -17,10 +17,6 @@ const isInsideCode = (node: Node): boolean => {
 	return false;
 };
 
-/**
- * Markdown post-processor that renders {{NAME}} tokens as their computed value
- * in Reading view. The CodeMirror extension covers the editor/Live-Preview only.
- */
 export const liveVariableReadingProcessor =
 	(plugin: LiveVariables) => (el: HTMLElement) => {
 		const doc = el.ownerDocument;
@@ -52,11 +48,11 @@ export const liveVariableReadingProcessor =
 				if (!isKnownVariable(content, plugin.vaultProperties)) {
 					continue;
 				}
-				const value = resolveLiveVariableValue(
+				const res = resolveLiveVariableValueDetailed(
 					content,
 					plugin.vaultProperties
 				);
-				if (value === undefined) {
+				if (res === undefined) {
 					continue;
 				}
 
@@ -68,10 +64,13 @@ export const liveVariableReadingProcessor =
 					);
 				}
 				const span = doc.createElement("span");
-				if (plugin.settings.highlightText) {
-					span.className = "lv-live-text";
-				}
-				span.textContent = value;
+				let cls = "";
+				if (plugin.settings.highlightText) cls += "lv-live-text ";
+				if (res.isBlur) cls += "lv-spoiler ";
+				if (cls) span.className = cls.trim();
+
+				span.dataset.variable = res.cleanKey;
+				span.textContent = res.value;
 				fragment.appendChild(span);
 				lastIndex = match.index + match[0].length;
 				replaced = true;
