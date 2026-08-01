@@ -92,7 +92,7 @@ export const resolveLiveVariableValueDetailed = (
 			rawVal = rawVal.toUpperCase();
 		} else if (filter === "lower" && typeof rawVal === "string") {
 			rawVal = rawVal.toLowerCase();
-		} else if (filter === "capitalize" && typeof rawVal === "string") {
+		} else if (filter === "capitalise" && typeof rawVal === "string") {
 			rawVal = rawVal.charAt(0).toUpperCase() + rawVal.slice(1);
 		} else if (filter.startsWith("join(")) {
 			const match = filter.match(/join\(["'](.*?)["']\)/);
