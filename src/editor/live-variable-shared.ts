@@ -82,6 +82,19 @@ export const resolveLiveVariableValueDetailed = (
 	for (const filter of filters) {
 		if (filter === "blur") {
 			isBlur = true;
+		} else if (filter == "list")  {
+        	if (Array.isArray(rawVal)) {
+            	rawVal = rawVal.map((item) => `- ${item}`).join("\n");
+        	}
+		}
+		else if (filter === "clean" || filter === "strip" || filter === "unlink") {
+			// [[ anything or not ]]
+    		const stripBrackets = (str: string) => str.replace(/\[\[(?:[^\]|]*\|)?([^\]]+)\]\]/g, "$1");
+    		if (typeof rawVal === "string") {
+        		rawVal = stripBrackets(rawVal);
+    		} else if (Array.isArray(rawVal)) {
+        		rawVal = rawVal.map((item) => typeof item === "string" ? stripBrackets(item) : item);
+    		}
 		} else if (filter === "first" && Array.isArray(rawVal)) {
 			rawVal = rawVal[0];
 		} else if (filter === "last" && Array.isArray(rawVal)) {

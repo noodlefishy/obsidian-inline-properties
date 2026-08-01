@@ -75,11 +75,18 @@ If your plugin does not need CSS, delete this file.
 }
 
 .lv-live-text {
+
+	white-space: pre-line; /* Allows \n to render as actual line breaks! */
+    display: inline-block; /* Keeps multiline blocks styled neatly */
+
 	background-color: var(--text-selection);
 	border-bottom: 2px solid var(--color-purple);
 	mix-blend-mode: var(--highlight-mix-blend-mode);
 	padding: 0 4px;
 	border-radius: 4px;
+
+
+
 	/* font-weight: bold; */
 }
 

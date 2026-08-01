@@ -74,6 +74,20 @@ class LiveVariableWidget extends WidgetType {
 			view.focus();
 		});
 
+		// Inside toDOM() in live-variable-extension.ts
+		span.addEventListener("mouseover", (event) => {
+			const targetFile = this.plugin.app.metadataCache.getFirstLinkpathDest(this.cleanKey, "");
+			if (targetFile) {
+				this.plugin.app.workspace.trigger("hover-link", {
+					event,
+					source: "preview",
+					hoverParent: view,
+					targetEl: span,
+					linktext: targetFile.path,
+				});
+			}
+		});
+
 		// Double-click to open frontmatter edit prompt!
 		span.addEventListener("dblclick", (e) => {
 			e.preventDefault();
