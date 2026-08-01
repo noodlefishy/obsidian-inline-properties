@@ -8,7 +8,7 @@ const metadataCacheChangeEvent = (plugin: LiveVariables) =>
 			frontmatterProperties
 		);
 		if (propertyChanged) {
-			plugin.vaultProperties.updateProperties(file);
+			plugin.vaultProperties.updateFileProperties(file);
 			refreshAllLiveVariables(plugin);
 		}
 	});

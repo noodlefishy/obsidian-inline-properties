@@ -98,3 +98,18 @@ If your plugin does not need CSS, delete this file.
 	font-size: var(--font-smaller);
 	margin-left: auto;
 }
+
+.lv-spoiler {
+	filter: blur(5px);
+	background-color: var(--background-modifier-border);
+	border-radius: 3px;
+	padding: 0 4px;
+	cursor: pointer;
+	transition: filter 0.2s ease, background-color 0.2s ease;
+}
+
+.lv-spoiler:hover,
+.lv-spoiler:active {
+	filter: blur(0);
+	background-color: transparent;
+}
