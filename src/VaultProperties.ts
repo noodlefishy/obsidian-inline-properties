@@ -1,5 +1,5 @@
 import { App, FrontMatterCache, TFile } from "obsidian";
-import { stringifyIfObj, trancateString } from "./utils";
+import { stringifyIfObj, trancateString, formatValue } from "./utils";
 
 export type Properties = Record<string, unknown> | string | number | boolean | null | unknown[] | undefined;
 
@@ -7,8 +7,8 @@ export default class VaultProperties {
 	private app: App;
 	private properties: Properties;
 	private localProperties: Properties;
-	private localKeysAndAllVariableKeys: string[];
-	private localKeys: string[];
+	private localKeysAndAllVariableKeys: string[] = [];
+	private localKeys: string[] = [];
 
 	constructor(app: App) {
 		this.app = app;
@@ -34,8 +34,8 @@ export default class VaultProperties {
 			if (localObj) {
 				const currentPropVal = localObj[newPropKey];
 				if (
-					JSON.stringify(currentPropVal) !==
-					JSON.stringify(newPropVal)
+					formatValue(currentPropVal) !==
+					formatValue(newPropVal)
 				) {
 					return true;
 				}
