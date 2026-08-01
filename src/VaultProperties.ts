@@ -48,10 +48,19 @@ export default class VaultProperties {
 		this.properties = this.buildVaultTree();
 	}
 
-	updateProperties(file: TFile) {
-		this.updateVaultProperties();
+	// faster incremental update for single changed files
+	updateFileProperties(file: TFile) {
+		this.setAtPath(
+			this.properties as Record<string, Properties>,
+			file.path,
+			this.getMarkdownProperties(file)
+		);
 		this.localProperties = this.getValueByPath(this.properties, file.path);
 		this.updateLocalKeysAndAllVariableKeys();
+	}
+
+	updateProperties(file: TFile) {
+		this.updateFileProperties(file);
 	}
 
 	private buildVaultTree(): Properties {
@@ -94,10 +103,42 @@ export default class VaultProperties {
 	}
 
 	getProperty(path: string): Properties {
-		return (
-			this.getLocalProperty(path) ??
-			this.getValueByPath(this.properties, path)
-		);
+		const pseudo = this.getPseudoProperty(path);
+		if (pseudo !== undefined) return pseudo;
+
+
+		const local = this.getLocalProperty(path);
+		if (local !== undefined) return local;
+
+		// Wikilinks & cross-note property lookup (for example {{ike.meaning}})
+		const wikilinkMatch = path.match(/^(?:\[\[)?([^\]]+)(?:\]\])?\.(.+)$/);
+		if (wikilinkMatch) {
+			const [, noteName, propPath] = wikilinkMatch;
+			const cleanNoteName = noteName.endsWith(".md") ? noteName : noteName + ".md";
+			const targetFile = this.app.metadataCache.getFirstLinkpathDest(cleanNoteName, "");
+			if (targetFile) {
+				const fileProps = this.getMarkdownProperties(targetFile);
+				return this.getLocalValueByPath(fileProps, propPath);
+			}
+		}
+
+		return this.getValueByPath(this.properties, path);
+	}
+
+	private getPseudoProperty(path: string): Properties {
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile) return undefined;
+
+		if (path === "this.title" || path === "this.name") {
+			return activeFile.basename;
+		}
+		if (path === "this.folder") {
+			return activeFile.parent ? activeFile.parent.name : "";
+		}
+		if (path === "this.mtime") {
+			return new Date(activeFile.stat.mtime).toLocaleDateString();
+		}
+		return undefined;
 	}
 
 	getLocalProperties() {
@@ -124,8 +165,7 @@ export default class VaultProperties {
 				result !== null &&
 				result !== undefined &&
 				typeof result === "object" &&
-				!Array.isArray(result) &&
-				key in result
+				key in (result as object)
 			) {
 				result = (result as Record<string, Properties>)[key];
 			} else {
@@ -146,6 +186,9 @@ export default class VaultProperties {
 	updateLocalKeysAndAllVariableKeys() {
 		this.localKeys = this.getAllPaths(this.getLocalProperties(), "", true);
 		this.localKeysAndAllVariableKeys = [
+			"this.title",
+			"this.folder",
+			"this.mtime",
 			...this.localKeys,
 			...this.getAllPaths(this.properties),
 		];

@@ -26,5 +26,5 @@ export function formatValue(value: unknown,  separator = ", "): string {
         return JSON.stringify(value);
     }
 
-	return String(value);
+    return String(value);
 }
