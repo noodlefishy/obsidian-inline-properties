@@ -18,11 +18,15 @@ export const resolveLiveVariableValue = (
 	content: string,
 	vaultProperties: VaultProperties
 ): string | undefined => {
-	const trimmed = content.trim();
-	if (trimmed.length === 0) return undefined;
-	const value = vaultProperties.getProperty(trimmed);
-	if (value === undefined || value === null) return undefined;
-	return stringifyIfObj(value);
+	const [keyPart, fallbackPart] = content.split("??");
+    const key = keyPart.trim();
+    const fallback = fallbackPart?.trim().replace(/^["']|["']$/g, ""); // quotes
+
+    const value = vaultProperties.getProperty(key);
+    if (value === undefined || value === null) {
+        return fallback;
+    }
+    return stringifyIfObj(value);
 };
 
 export const resolveLiveVariablesInText = (

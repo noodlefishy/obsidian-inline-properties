@@ -1,10 +1,10 @@
 {
 	"id": "inline-properties",
 	"name": "Inline Properties",
-	"version": "1.0.7",
+	"version": "1.1.0",
 	"minAppVersion": "1.4.0",
-	"description": "Reference note properties as inline variables anywhere in your vault using {{variable}} syntax.",
-	"author": "Zizouet",
-	"authorUrl": "https://github.com/Zizouet",
+	"description": "Reference note properties as inline variables anywhere in your vault using {{variable}} syntax. Forked from https://github.com/fr4nc0i5/obsidian-inline-properties",
+	"author": "Noodlefishy",
+	"authorUrl": "https://github.com/noodlefishy",
 	"isDesktopOnly": false
 }
